@@ -28,7 +28,7 @@ export interface OcorrenciaRepository {
   listar(filtro?: FiltroOcorrencias): Promise<Ocorrencia[]>
   /** GET /api/v1/ocorrencias/{id} */
   buscarPorId(id: string): Promise<Ocorrencia>
-  /** PUT /api/v1/ocorrencias/{id} — só ADMINISTRADOR */
+  /** PATCH /api/v1/ocorrencias/{id}/prioridade e /status — só ADMINISTRADOR; operações não atômicas. */
   atualizar(id: string, input: AtualizarOcorrenciaInput): Promise<Ocorrencia>
   /** GET /api/v1/ocorrencias/indicadores */
   indicadores(): Promise<Indicadores>
