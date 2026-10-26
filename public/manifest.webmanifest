@@ -1,0 +1,16 @@
+{
+  "name": "Zelar.app",
+  "short_name": "Zelar",
+  "description": "Registre e acompanhe ocorrências urbanas na sua cidade.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1D2825",
+  "theme_color": "#285C3D",
+  "icons": [
+    { "src": "/assets/icone-zelar-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/icone-zelar-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
