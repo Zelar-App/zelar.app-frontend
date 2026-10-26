@@ -22,11 +22,13 @@ O frontend é responsável pela apresentação dessas informações, interação
 
 * **Frontend:** React 19, TypeScript e Vite
 * **Estilos:** Tailwind CSS 4 e fonte Inter
-* **Gerenciamento de estado:** a integrar nas próximas entregas
-* **Comunicação com API:** a integrar nas próximas entregas
+* **Gerenciamento de estado:** Context e hooks React
+* **Comunicação com API:** adaptadores HTTP e modo mock para demonstração
 * **Testes:** Vitest, Testing Library e jsdom
 * **Lint:** Oxlint
-* **Ferramentas futuras:** Docker e CI/CD
+* **Integração contínua:** GitHub Actions com lint, testes e build
+
+O workflow de lint, testes e build está descrito em [CI do frontend](docs/CI.md).
 
 ## Arquitetura e Padrões
 
@@ -72,6 +74,8 @@ O projeto busca seguir práticas de qualidade desde o início:
 
 Use Node.js 24 e npm. Na raiz do repositório:
 
+O requisito de Node 24 está declarado em `package.json` e `.node-version`.
+
 ```bash
 npm ci
 npm run dev
@@ -79,7 +83,11 @@ npm run dev
 
 Para personalizar o ambiente, copie `.env.example` para `.env.local`. As variáveis
 `VITE_*` são públicas no frontend e não devem conter segredos. A leitura do ambiente
-aceita os modos `mock` e `http`; os adaptadores serão incluídos em entregas futuras.
+aceita os modos `mock` e `http`; os adaptadores são entregues nas branches de serviços.
+
+Os contratos, o proxy local e as limitações do backend estão documentados em
+[Integração HTTP](docs/INTEGRACAO-HTTP.md). Dados e credenciais do mock são apenas
+demonstrativos e não correspondem a contas reais.
 
 Para verificar o projeto:
 

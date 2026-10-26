@@ -2,12 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { lerEnv } from './env'
 
 describe('lerEnv', () => {
-  it('usa mock, localhost:8080 e Belo Horizonte como padrões', () => {
+  it.each(['91,0', '-91,0', '0,181', '0,-181', ',', ' , '])('descarta coordenadas fora da faixa ou vazias: %s', (centro) => {
+    expect(lerEnv({ VITE_MAP_CENTER: centro }).mapCenter).toEqual([-19.9167, -43.9345])
+  })
+
+  it('preserva zero como uma coordenada válida', () => {
+    expect(lerEnv({ VITE_MAP_CENTER: '0,0' }).mapCenter).toEqual([0, 0])
+  })
+
+  it('usa mock, mesma origem e Belo Horizonte como padrões', () => {
     expect(lerEnv({})).toEqual({
       apiMode: 'mock',
-      apiBaseUrl: 'http://localhost:8080',
+      apiBaseUrl: '',
       mapCenter: [-19.9167, -43.9345],
     })
+  })
+
+  it('usa o proxy da mesma origem ao habilitar HTTP sem URL externa', () => {
+    expect(lerEnv({ VITE_API_MODE: 'http' }).apiBaseUrl).toBe('')
   })
 
   it('lê os valores das variáveis VITE_*', () => {
