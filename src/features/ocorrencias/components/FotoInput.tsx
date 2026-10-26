@@ -6,6 +6,7 @@ import { Spinner } from '../../../shared/ui'
 export interface FotoInputProps {
   valor: File | null
   aoMudar: (f: File | null) => void
+  aoProcessamentoMudar?: (processando: boolean) => void
   /** Conversor da imagem escolhida (padrão: canvas → JPEG ≤ 1024px). Injetável para testes. */
   comprimir?: (arquivo: File) => Promise<File>
 }
@@ -16,7 +17,7 @@ const TAMANHO_MAX = 10 * 1024 * 1024 // 10 MB antes da compressão
  * Foto opcional: abre a câmera traseira no celular, comprime na escolha (vale para mock e http),
  * mostra prévia e permite remover.
  */
-export function FotoInput({ valor, aoMudar, comprimir = comprimirParaJpeg }: FotoInputProps) {
+export function FotoInput({ valor, aoMudar, aoProcessamentoMudar, comprimir = comprimirParaJpeg }: FotoInputProps) {
   const id = useId()
   const [erro, setErro] = useState<string | null>(null)
   const [processando, setProcessando] = useState(false)
@@ -45,12 +46,14 @@ export function FotoInput({ valor, aoMudar, comprimir = comprimirParaJpeg }: Fot
     }
     setErro(null)
     setProcessando(true)
+    aoProcessamentoMudar?.(true)
     try {
       aoMudar(await comprimir(f))
     } catch (err) {
       setErro(err instanceof Error && err.message ? err.message : 'Não foi possível ler a imagem.')
     } finally {
       setProcessando(false)
+      aoProcessamentoMudar?.(false)
     }
   }
 

@@ -20,6 +20,7 @@ export default function FormularioChamadoPage() {
   const [categoria, setCategoria] = useState<Categoria | null>(null)
   const [descricao, setDescricao] = useState('')
   const [foto, setFoto] = useState<File | null>(null)
+  const [fotoProcessando, setFotoProcessando] = useState(false)
   const [erros, setErros] = useState<{ categoria?: string; descricao?: string }>({})
   const [erroApi, setErroApi] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -28,6 +29,7 @@ export default function FormularioChamadoPage() {
 
   async function aoEnviar(e: FormEvent) {
     e.preventDefault()
+    if (fotoProcessando || enviando) return
     const v: typeof erros = {}
     if (!categoria) v.categoria = 'Escolha uma categoria'
     if (!descricao.trim()) v.descricao = 'Descreva o problema'
@@ -76,11 +78,12 @@ export default function FormularioChamadoPage() {
           rows={4}
         />
 
-        <FotoInput valor={foto} aoMudar={setFoto} />
+        <FotoInput valor={foto} aoMudar={setFoto} aoProcessamentoMudar={setFotoProcessando} />
+        {fotoProcessando && <p role="status" className="text-sm text-text-muted">A foto está sendo preparada. Aguarde para enviar.</p>}
 
         {erroApi && <ErrorBanner mensagem={erroApi} />}
 
-        <Button type="submit" tamanho="lg" larguraTotal carregando={enviando} icone={<Send className="size-5" aria-hidden="true" />}>
+        <Button type="submit" tamanho="lg" larguraTotal carregando={enviando} disabled={fotoProcessando} icone={<Send className="size-5" aria-hidden="true" />}>
           Enviar chamado
         </Button>
       </form>
