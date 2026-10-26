@@ -10,12 +10,16 @@ describe('lerEnv', () => {
     expect(lerEnv({ VITE_MAP_CENTER: '0,0' }).mapCenter).toEqual([0, 0])
   })
 
-  it('usa mock, localhost:8080 e Belo Horizonte como padrões', () => {
+  it('usa mock, mesma origem e Belo Horizonte como padrões', () => {
     expect(lerEnv({})).toEqual({
       apiMode: 'mock',
-      apiBaseUrl: 'http://localhost:8080',
+      apiBaseUrl: '',
       mapCenter: [-19.9167, -43.9345],
     })
+  })
+
+  it('usa o proxy da mesma origem ao habilitar HTTP sem URL externa', () => {
+    expect(lerEnv({ VITE_API_MODE: 'http' }).apiBaseUrl).toBe('')
   })
 
   it('lê os valores das variáveis VITE_*', () => {
