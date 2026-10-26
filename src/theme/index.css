@@ -1,0 +1,151 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --breakpoint-desktop: 75rem;
+
+  --color-bg: #1d2825;
+  --color-bg-elevated: #24332e;
+  --color-surface: #2a3b35;
+  --color-surface-strong: #285c3d;
+
+  --color-text: #f5f5ee;
+  --color-text-muted: #c1c9c3;
+  --color-text-dim: #8e9c93;
+
+  --color-primary: #83b735;
+  --color-primary-deep: #6e992f;
+  --color-primary-soft: #83b73526;
+
+  --color-success: #1be7a6;
+  --color-success-soft: #1be7a626;
+  --color-warning: #ff9f1c;
+  --color-warning-soft: #ff9f1c26;
+  --color-danger: #ff4d6d;
+  --color-danger-soft: #ff4d6d26;
+
+  --color-border: #83b73538;
+  --color-border-strong: #83b73580;
+
+  --radius-card: 1.5rem;
+  --radius-field: 1rem;
+
+  --shadow-card: 0 8px 32px #00000073;
+  --shadow-glow: 0 0 0 1px #83b73540, 0 0 24px #83b73540;
+  --shadow-glow-strong: 0 0 0 1px #83b73580, 0 0 32px #83b73566;
+  --shadow-glow-success: 0 0 0 1px #1be7a640, 0 0 20px #1be7a640;
+
+  --spacing-tabbar: 4.75rem;
+  --blur-glass: 18px;
+}
+
+@utility glass {
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+@utility glass-glow {
+  box-shadow: var(--shadow-card), var(--shadow-glow);
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-padding-bottom: calc(var(--spacing-tabbar) + 1rem);
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    background-image:
+      radial-gradient(60% 40% at 50% -10%, #83b73533 0%, transparent 70%),
+      radial-gradient(40% 30% at 100% 100%, #285c3d66 0%, transparent 70%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  #root {
+    min-height: 100dvh;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* Mantém estados interativos institucionais na paleta verde. */
+.bg-primary:hover {
+  background-color: var(--color-primary-deep);
+}
+
+@keyframes subir {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Leaflet: tiles OSM invertidos para o visual escuro/neon do mockup */
+.tiles-dark {
+  filter: invert(1) hue-rotate(105deg) saturate(0.55) brightness(0.82) contrast(1.15);
+}
+
+/* Leaflet: fundo e controles no tema escuro */
+.leaflet-container {
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+}
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--color-bg-elevated) 80%, transparent) !important;
+  color: var(--color-text-dim) !important;
+  font-size: 10px;
+}
+.leaflet-control-attribution a {
+  color: var(--color-text-muted) !important;
+}
+.pin-ocorrencia {
+  background: transparent;
+  border: 0;
+}
+.pin {
+  position: relative;
+  width: 36px;
+  height: 44px;
+  filter: drop-shadow(0 0 6px var(--pin)) drop-shadow(0 4px 6px #00000080);
+  transition: transform 0.15s ease-out;
+}
+.pin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 22px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--pin);
+  opacity: 0.45;
+  transform: translateX(-50%);
+  filter: blur(4px);
+}
+.pin-ativo,
+.leaflet-marker-icon:hover .pin {
+  transform: scale(1.15) translateY(-2px);
+}

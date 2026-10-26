@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite'
 import { loadEnv, type PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const plugins: PluginOption[] = [react()]
+  const plugins: PluginOption[] = [react(), tailwindcss()]
 
   // VITE_HTTPS=true liga HTTPS local (certificado autoassinado) para testar GPS e câmera
   // num celular na mesma rede: https://<ip-do-pc>:5173
