@@ -16,7 +16,12 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     plugins,
-    server: { host: env.VITE_HTTPS === 'true' },
+    server: {
+      host: env.VITE_HTTPS === 'true',
+      proxy: env.VITE_API_MODE === 'http' ? {
+        '/api': { target: env.API_PROXY_TARGET || 'http://localhost:8080', changeOrigin: true },
+      } : undefined,
+    },
     test: {
       environment: 'jsdom',
       globals: true,
