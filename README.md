@@ -20,12 +20,12 @@ O frontend é responsável pela apresentação dessas informações, interação
 
 ## Stack Tecnológica (MVP)
 
-A stack definitiva do frontend ainda será definida.
-
-* **Frontend:** A definir
-* **Gerenciamento de estado:** A definir
-* **Comunicação com API:** A definir
-* **Testes:** A definir
+* **Frontend:** React 19, TypeScript e Vite
+* **Estilos:** Tailwind CSS 4 e fonte Inter
+* **Gerenciamento de estado:** a integrar nas próximas entregas
+* **Comunicação com API:** a integrar nas próximas entregas
+* **Testes:** Vitest, Testing Library e jsdom
+* **Lint:** Oxlint
 * **Ferramentas futuras:** Docker e CI/CD
 
 ## Arquitetura e Padrões
@@ -70,21 +70,47 @@ O projeto busca seguir práticas de qualidade desde o início:
 
 ## Como Executar
 
-As instruções de instalação das dependências, configuração do ambiente e execução local serão adicionadas após a definição da stack tecnológica do frontend.
+Use Node.js 24 e npm. Na raiz do repositório:
 
-## Preparação da base
+```bash
+npm ci
+npm run dev
+```
 
-Use Node.js 24 e `npm ci` para instalar as dependências. Esta etapa prepara
-as bibliotecas da aplicação; os comandos de execução serão adicionados com o Vite.
+Para personalizar o ambiente, copie `.env.example` para `.env.local`. As variáveis
+`VITE_*` são públicas no frontend e não devem conter segredos. A leitura do ambiente
+aceita os modos `mock` e `http`; os adaptadores serão incluídos em entregas futuras.
 
-TypeScript, os tipos compartilhados e Oxlint estão instalados. O comando de lint
-será disponibilizado junto dos primeiros arquivos de código na próxima etapa.
+Para verificar o projeto:
 
-`npm run dev` inicia a aplicação mínima; `npm run build` verifica os tipos e gera
-o build; `npm run preview` serve o build e `npm run lint` verifica o código.
-O tema entra na próxima etapa.
+```bash
+npm run build
+npm run lint
+npm test
+```
 
-O tema global usa Tailwind CSS 4 e a fonte Inter, com a paleta compartilhada do Zelar.
+`npm run preview` serve o build local depois de `npm run build`.
 
-`npm test` executa os três testes de leitura do ambiente em Node. O suporte ao DOM
-para testes de componentes será ativado na última etapa.
+Para testar GPS e câmera em dispositivos da rede local, defina `VITE_HTTPS=true`
+em `.env.local` e execute `npm run dev`. O HTTPS local usa certificado autoassinado.
+
+## Entrega incremental
+
+Esta primeira entrega contém configuração, dependências, estilos globais,
+inicialização mínima e leitura de ambiente com testes. As páginas e a integração
+com os serviços serão adicionadas por PRs separados para `develop`.
+
+A base compartilhada ainda será complementada antes dos PRs paralelos de
+funcionalidades. A divisão acordada é:
+
+| V4SP3R | Michele |
+| --- | --- |
+| Base comum | Cadastro |
+| Login | Conta do usuário |
+| Página do mapa | Página inicial |
+| Abertura e formulário de chamado | Histórico de ocorrências |
+| Painel administrativo completo | Detalhes e acompanhamento |
+| Integração final das rotas | Testes das respectivas funcionalidades |
+
+Cada funcionalidade usa branch própria e inclui seus testes. Alterações na
+integração das rotas serão coordenadas para evitar conflitos.

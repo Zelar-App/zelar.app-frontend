@@ -17,6 +17,11 @@ export default defineConfig(async ({ mode }) => {
   return {
     plugins,
     server: { host: env.VITE_HTTPS === 'true' },
-    test: { environment: 'node', globals: true, css: false },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: ['src/test/setup.ts'],
+      css: false,
+    },
   }
 })
