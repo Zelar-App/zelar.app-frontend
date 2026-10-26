@@ -13,9 +13,10 @@ const rotas = [
 async function montar() {
   const api = apiDeTeste()
   await api.auth.login({ email: USUARIOS_SEED[1].email, senha: USUARIOS_SEED[1].senha })
+  const persistir = api.ocorrencias.atualizar.bind(api.ocorrencias)
   const atualizar = vi.spyOn(api.ocorrencias, 'atualizar')
   const indicadores = vi.spyOn(api.ocorrencias, 'indicadores')
-  return { ...renderComProviders(<div />, { api, rota: '/admin', rotas }), atualizar, indicadores }
+  return { ...renderComProviders(<div />, { api, rota: '/admin', rotas }), atualizar, indicadores, persistir }
 }
 
 const indicador = (nome: string) => within(screen.getByRole('region', { name: nome })).getByText(/^\d+$/)
@@ -68,5 +69,26 @@ describe('AdminPage', () => {
     const dialogo = await screen.findByRole('dialog')
     expect(within(dialogo).queryByRole('button', { name: /Avançar/ })).toBeNull()
     expect(within(dialogo).getByText(/encerrad/i)).toBeInTheDocument()
+  })
+
+  it('recarrega os dados após alteração parcial e mantém o painel aberto com o erro', async () => {
+    const { api, atualizar, indicadores, persistir } = await montar()
+    const listar = vi.spyOn(api.ocorrencias, 'listar')
+    atualizar.mockImplementationOnce(async (id, dados) => {
+      await persistir(id, { prioridade: dados.prioridade })
+      throw new Error('A prioridade foi salva, mas o status não foi atualizado.')
+    })
+    await waitFor(() => expect(indicador('Enviadas')).toHaveTextContent('3'))
+    await userEvent.click(screen.getByRole('button', { name: 'Enviadas' }))
+    await userEvent.click(within(screen.getAllByRole('listitem')[0]).getByRole('button', { name: 'Gerenciar' }))
+    const dialogo = await screen.findByRole('dialog')
+    await userEvent.selectOptions(within(dialogo).getByLabelText('Prioridade'), 'ALTA')
+    const consultas = listar.mock.calls.length
+    const contagens = indicadores.mock.calls.length
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Avançar para Em análise' }))
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent(/prioridade foi salva/)
+    await waitFor(() => expect(listar.mock.calls.length).toBeGreaterThan(consultas))
+    expect(indicadores.mock.calls.length).toBeGreaterThan(contagens)
+    expect(within(dialogo).getByRole('button', { name: 'Salvar só a prioridade' })).toBeDisabled()
   })
 })
