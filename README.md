@@ -79,3 +79,7 @@ as bibliotecas da aplicação; os comandos de execução serão adicionados com 
 
 TypeScript, os tipos compartilhados e Oxlint estão instalados. O comando de lint
 será disponibilizado junto dos primeiros arquivos de código na próxima etapa.
+
+`npm run dev` inicia a aplicação mínima; `npm run build` verifica os tipos e gera
+o build; `npm run preview` serve o build e `npm run lint` verifica o código.
+O tema entra na próxima etapa.
