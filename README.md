@@ -76,3 +76,6 @@ As instruções de instalação das dependências, configuração do ambiente e 
 
 Use Node.js 24 e `npm ci` para instalar as dependências. Esta etapa prepara
 as bibliotecas da aplicação; os comandos de execução serão adicionados com o Vite.
+
+TypeScript, os tipos compartilhados e Oxlint estão instalados. O comando de lint
+será disponibilizado junto dos primeiros arquivos de código na próxima etapa.
