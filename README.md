@@ -22,11 +22,11 @@ O frontend é responsável pela apresentação dessas informações, interação
 
 * **Frontend:** React 19, TypeScript e Vite
 * **Estilos:** Tailwind CSS 4 e fonte Inter
-* **Gerenciamento de estado:** a integrar nas próximas entregas
-* **Comunicação com API:** a integrar nas próximas entregas
+* **Gerenciamento de estado:** Context e hooks React
+* **Comunicação com API:** adaptadores HTTP e modo mock para demonstração
 * **Testes:** Vitest, Testing Library e jsdom
 * **Lint:** Oxlint
-* **Ferramentas futuras:** Docker e CI/CD
+* **Integração contínua:** GitHub Actions com lint, testes e build
 
 O workflow de lint, testes e build está descrito em [CI do frontend](docs/CI.md).
 
