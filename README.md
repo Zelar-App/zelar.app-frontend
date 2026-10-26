@@ -85,3 +85,6 @@ o build; `npm run preview` serve o build e `npm run lint` verifica o código.
 O tema entra na próxima etapa.
 
 O tema global usa Tailwind CSS 4 e a fonte Inter, com a paleta compartilhada do Zelar.
+
+`npm test` executa os três testes de leitura do ambiente em Node. O suporte ao DOM
+para testes de componentes será ativado na última etapa.

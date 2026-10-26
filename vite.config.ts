@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import { loadEnv, type PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -17,5 +17,6 @@ export default defineConfig(async ({ mode }) => {
   return {
     plugins,
     server: { host: env.VITE_HTTPS === 'true' },
+    test: { environment: 'node', globals: true, css: false },
   }
 })
