@@ -1,9 +1,12 @@
-import { screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { USUARIOS_SEED } from '../../../services/api/mock/seed'
 import { apiDeTeste, renderComProviders } from '../../../test/helpers'
 import FormularioChamadoPage from './FormularioChamadoPage'
+
+const comprimir = vi.hoisted(() => vi.fn())
+vi.mock(import('../../../shared/lib/imagem'), async (importOriginal) => ({ ...await importOriginal(), comprimirParaJpeg: comprimir }))
 
 const rotas = [
   { path: '/abrir-chamado', element: <h1>Escolher local</h1> },
@@ -23,12 +26,56 @@ async function montar(state: unknown = { localizacao }) {
     rota: '/abrir-chamado/formulario',
   })
   // injeta o state da navegação como se viesse do passo 1
-  await r.router.navigate('/abrir-chamado/formulario', { state, replace: true })
+  await act(async () => { await r.router.navigate('/abrir-chamado/formulario', { state, replace: true }) })
   return { ...r, criar }
 }
 
 describe('FormularioChamadoPage', () => {
-  beforeEach(() => window.localStorage.clear())
+  beforeEach(() => {
+    window.localStorage.clear()
+    comprimir.mockReset()
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = vi.fn(() => 'blob:foto')
+      static revokeObjectURL = vi.fn()
+    })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('bloqueia clique e submit até a foto ficar pronta e envia o arquivo comprimido', async () => {
+    let concluir!: (arquivo: File) => void
+    comprimir.mockImplementationOnce(() => new Promise<File>((resolve) => { concluir = resolve }))
+    const { criar, router } = await montar()
+    await userEvent.click(await screen.findByRole('button', { name: 'Buraco na via' }))
+    await userEvent.type(screen.getByLabelText('Descrição'), 'Buraco com foto')
+    await userEvent.upload(screen.getByLabelText('Adicionar foto'), new File(['origem'], 'origem.png', { type: 'image/png' }))
+    const enviar = screen.getByRole('button', { name: 'Enviar chamado' })
+    expect(enviar).toBeDisabled()
+    fireEvent.submit(enviar.closest('form')!)
+    expect(criar).not.toHaveBeenCalled()
+    const pronta = new File(['jpeg'], 'pronta.jpg', { type: 'image/jpeg' })
+    await act(async () => concluir(pronta))
+    await waitFor(() => expect(enviar).toBeEnabled())
+    await userEvent.click(enviar)
+    await waitFor(() => expect(criar).toHaveBeenCalledWith(expect.objectContaining({ foto: pronta })))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/historico\//))
+  })
+
+  it('mostra a falha da preparação e libera envio sem foto após a falha', async () => {
+    let falhar!: (erro: Error) => void
+    comprimir.mockImplementationOnce(() => new Promise<File>((_resolve, reject) => { falhar = reject }))
+    const { criar, router } = await montar()
+    await userEvent.click(await screen.findByRole('button', { name: 'Buraco na via' }))
+    await userEvent.type(screen.getByLabelText('Descrição'), 'Buraco sem anexo válido')
+    await userEvent.upload(screen.getByLabelText('Adicionar foto'), new File(['origem'], 'origem.png', { type: 'image/png' }))
+    const enviar = screen.getByRole('button', { name: 'Enviar chamado' })
+    expect(enviar).toBeDisabled()
+    await act(async () => falhar(new Error('Falha ao preparar imagem')))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Falha ao preparar imagem')
+    expect(enviar).toBeEnabled()
+    await userEvent.click(enviar)
+    await waitFor(() => expect(criar).toHaveBeenCalledWith(expect.objectContaining({ foto: null })))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/historico\//))
+  })
 
   it('sem localização no state volta para o passo 1', async () => {
     const { router } = await montar(null)
