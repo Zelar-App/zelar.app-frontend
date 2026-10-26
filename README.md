@@ -71,3 +71,8 @@ O projeto busca seguir práticas de qualidade desde o início:
 ## Como Executar
 
 As instruções de instalação das dependências, configuração do ambiente e execução local serão adicionadas após a definição da stack tecnológica do frontend.
+
+## Preparação da base
+
+Use Node.js 24 e `npm ci` para instalar as dependências. Esta etapa prepara
+as bibliotecas da aplicação; os comandos de execução serão adicionados com o Vite.
