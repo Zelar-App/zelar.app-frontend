@@ -1,6 +1,14 @@
 import type { CadastroInput, LoginInput, SessaoAuth, Usuario } from '../../../domain/types'
 import type { AuthRepository } from '../contracts'
 import type { ClienteHttp } from './client'
+import { ApiError, ehApiError } from '../errors'
+
+interface LoginResponse {
+  accessToken: string
+  tokenType: string
+  expiresIn: number
+  usuario: Usuario
+}
 
 export const CHAVE_SESSAO_HTTP = 'zelar.sessao'
 
@@ -45,18 +53,30 @@ export function criarAuthHttp(http: ClienteHttp): AuthRepository {
     },
 
     async login(input: LoginInput): Promise<SessaoAuth> {
-      const sessao = await http.post<SessaoAuth>('/api/v1/auth/login', input)
+      const resposta = await http.post<LoginResponse>('/api/v1/auth/login', input)
+      if (!resposta.accessToken || !resposta.usuario) throw new ApiError(502, 'O servidor retornou uma sessão inválida.')
+      const sessao: SessaoAuth = { token: resposta.accessToken, usuario: resposta.usuario }
       window.localStorage.setItem(CHAVE_SESSAO_HTTP, JSON.stringify(sessao))
       return sessao
     },
 
     async restaurarSessao(): Promise<SessaoAuth | null> {
       const sessao = lerSessao()
-      if (!sessao || tokenExpirado(sessao.token)) {
+      if (!sessao?.token || tokenExpirado(sessao.token)) {
         window.localStorage.removeItem(CHAVE_SESSAO_HTTP)
         return null
       }
-      return sessao
+      try {
+        const atualizada = { token: sessao.token, usuario: await http.get<Usuario>('/api/v1/auth/me') }
+        window.localStorage.setItem(CHAVE_SESSAO_HTTP, JSON.stringify(atualizada))
+        return atualizada
+      } catch (erro) {
+        if (ehApiError(erro) && (erro.status === 401 || erro.status === 403)) {
+          window.localStorage.removeItem(CHAVE_SESSAO_HTTP)
+          return null
+        }
+        throw erro
+      }
     },
 
     async logout(): Promise<void> {
