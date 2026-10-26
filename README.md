@@ -28,6 +28,8 @@ O frontend é responsável pela apresentação dessas informações, interação
 * **Lint:** Oxlint
 * **Ferramentas futuras:** Docker e CI/CD
 
+O workflow de lint, testes e build está descrito em [CI do frontend](docs/CI.md).
+
 ## Arquitetura e Padrões
 
 * Organização do código baseada na responsabilidade de cada componente.
