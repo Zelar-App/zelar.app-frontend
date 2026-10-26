@@ -32,10 +32,14 @@ function FormularioGerenciar({ ocorrencia, aoFechar, aoSalvar }: AlterarStatusSh
   const prioridadeMudou = (prioridade || null) !== (ocorrencia.prioridade ?? null)
 
   async function salvar(avancar: boolean) {
+    if (prioridadeMudou && !prioridade && ocorrencia.prioridade) {
+      setErro('Escolha uma prioridade válida. Uma prioridade já definida não pode ser removida.')
+      return
+    }
     const dados: { status?: Ocorrencia['status']; prioridade?: Prioridade } = {}
     if (avancar && proximo) dados.status = proximo
     if (prioridade && prioridadeMudou) dados.prioridade = prioridade
-    if (!dados.status && !dados.prioridade) return aoFechar()
+    if (!dados.status && !dados.prioridade) return
     setSalvando(true)
     setErro(null)
     try {
@@ -68,7 +72,7 @@ function FormularioGerenciar({ ocorrencia, aoFechar, aoSalvar }: AlterarStatusSh
           onChange={(e) => setPrioridade(e.target.value as Prioridade | '')}
           className={`${CLASSE_CAMPO} h-12`}
         >
-          <option value="">Sem prioridade</option>
+          <option value="" disabled={ocorrencia.prioridade != null}>Sem prioridade</option>
           {PRIORIDADES.map((p) => (
             <option key={p} value={p}>
               {rotuloPrioridade(p)}

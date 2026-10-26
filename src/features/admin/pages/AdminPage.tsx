@@ -1,6 +1,6 @@
 import { Inbox } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import type { Ocorrencia, Prioridade, StatusOcorrencia } from '../../../domain/types'
+import type { Prioridade, StatusOcorrencia } from '../../../domain/types'
 import { useApi } from '../../../services/api/useApi'
 import { useAsync } from '../../../shared/hooks/useAsync'
 import { Button, EmptyState, ErrorBanner, Spinner } from '../../../shared/ui'
@@ -16,7 +16,8 @@ export default function AdminPage() {
   const indicadores = useAsync(() => api.ocorrencias.indicadores(), [api])
   const [status, setStatus] = useState<StatusOcorrencia | null>(null)
   const [prioridade, setPrioridade] = useState<Prioridade | null>(null)
-  const [selecionada, setSelecionada] = useState<Ocorrencia | null>(null)
+  const [selecionadaId, setSelecionadaId] = useState<string | null>(null)
+  const selecionada = lista.find((item) => item.id === selecionadaId) ?? null
 
   const visiveis = useMemo(
     () => lista.filter((o) => (!status || o.status === status) && (!prioridade || o.prioridade === prioridade)),
@@ -24,8 +25,12 @@ export default function AdminPage() {
   )
 
   async function salvar(id: string, dados: { status?: StatusOcorrencia; prioridade?: Prioridade }) {
-    await api.ocorrencias.atualizar(id, dados)
-    await Promise.all([recarregar(), indicadores.recarregar()])
+    try {
+      await api.ocorrencias.atualizar(id, dados)
+    } finally {
+      // PATCHs separados podem ter sucesso parcial; buscar o estado persistido também no erro.
+      await Promise.all([recarregar(), indicadores.recarregar()])
+    }
   }
 
   return (
@@ -57,9 +62,9 @@ export default function AdminPage() {
       {!carregando && !erro && visiveis.length === 0 && (
         <EmptyState icone={<Inbox className="size-7" aria-hidden="true" />} titulo="Nenhuma ocorrência com esses filtros" descricao="Ajuste os filtros para ver outros chamados." />
       )}
-      {visiveis.length > 0 && <ListaAdmin lista={visiveis} aoGerenciar={setSelecionada} />}
+      {visiveis.length > 0 && <ListaAdmin lista={visiveis} aoGerenciar={(item) => setSelecionadaId(item.id)} />}
 
-      <AlterarStatusSheet ocorrencia={selecionada} aoFechar={() => setSelecionada(null)} aoSalvar={salvar} />
+      <AlterarStatusSheet ocorrencia={selecionada} aoFechar={() => setSelecionadaId(null)} aoSalvar={salvar} />
     </div>
   )
 }
