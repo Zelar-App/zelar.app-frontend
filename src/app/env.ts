@@ -12,7 +12,7 @@ const CENTRO_PADRAO: [number, number] = [-19.9167, -43.9345] // Belo Horizonte
 
 export function lerEnv(raw: RawEnv): AppEnv {
   const apiMode: ApiMode = raw.VITE_API_MODE === 'http' ? 'http' : 'mock'
-  const apiBaseUrl = (raw.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/+$/, '')
+  const apiBaseUrl = (raw.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
   const valores = (raw.VITE_MAP_CENTER ?? '').split(',').map((p) => p.trim())
   const partes = valores.map(Number)
   const centroValido = valores.length === 2 && valores.every(Boolean) && partes.every(Number.isFinite)
