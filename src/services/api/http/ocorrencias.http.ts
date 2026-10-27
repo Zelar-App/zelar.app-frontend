@@ -21,6 +21,7 @@ interface OcorrenciaResponse extends Omit<Ocorrencia, 'localizacao' | 'criadoEm'
   dataCriacao: string
   dataAtualizacao?: string | null
   historico?: HistoricoStatus[]
+  possuiFotografia?: boolean
 }
 
 interface PaginaResponse {
@@ -49,8 +50,7 @@ function normalizar(dto: OcorrenciaResponse): Ocorrencia {
 export function criarOcorrenciasHttp(http: ClienteHttp): OcorrenciaRepository {
   return {
     async criar(input: NovaOcorrenciaInput): Promise<Ocorrencia> {
-      // A develop aceita JSON; multipart depende do contrato ainda pendente da BE-13.
-      if (input.foto) throw new ApiError(501, 'O servidor ainda não aceita fotos. Remova a foto para enviar o chamado.')
+      // O backend separa a criação (JSON) do upload da foto (multipart em endpoint próprio).
       const dados = {
         categoria: input.categoria,
         descricao: input.descricao,
@@ -58,7 +58,16 @@ export function criarOcorrenciasHttp(http: ClienteHttp): OcorrenciaRepository {
         longitude: input.localizacao.longitude,
         enderecoAproximado: input.localizacao.enderecoAproximado ?? undefined,
       }
-      return normalizar(await http.post<OcorrenciaResponse>(CAMINHO, dados))
+      const criada = normalizar(await http.post<OcorrenciaResponse>(CAMINHO, dados))
+      if (!input.foto) return criada
+      const form = new FormData()
+      form.append('foto', input.foto)
+      try {
+        await http.postForm(`${CAMINHO}/${encodeURIComponent(criada.id)}/fotografia`, form)
+      } catch (erro) {
+        throw new ApiError(ehApiError(erro) ? erro.status : 0, `O chamado foi criado, mas a foto não foi enviada. ${mensagemDeErro(erro)}`)
+      }
+      return criada
     },
 
     async listar(filtro: FiltroOcorrencias = {}): Promise<Ocorrencia[]> {
@@ -84,7 +93,18 @@ export function criarOcorrenciasHttp(http: ClienteHttp): OcorrenciaRepository {
     },
 
     async buscarPorId(id: string): Promise<Ocorrencia> {
-      return normalizar(await http.get<OcorrenciaResponse>(`${CAMINHO}/${encodeURIComponent(id)}`))
+      const caminho = `${CAMINHO}/${encodeURIComponent(id)}`
+      const dto = await http.get<OcorrenciaResponse>(caminho)
+      const item = normalizar(dto)
+      // A foto trafega autenticada; <img> não envia Bearer, então o blob vira URL de objeto.
+      if (dto.possuiFotografia) {
+        try {
+          item.fotoUrl = URL.createObjectURL(await http.getBlob(`${caminho}/fotografia`))
+        } catch {
+          // O detalhe continua legível sem a foto quando o download falha.
+        }
+      }
+      return item
     },
 
     async atualizar(id: string, input: AtualizarOcorrenciaInput): Promise<Ocorrencia> {
