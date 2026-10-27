@@ -1,5 +1,6 @@
-import { FileText, Home, Map, User, Zap } from 'lucide-react'
+import { FileText, Home, Map, ShieldCheck, User, Zap } from 'lucide-react'
 import { NavLink } from 'react-router'
+import { useAuth } from '../../features/auth/useAuth'
 import { cn } from '../lib/cn'
 
 const ABAS = [
@@ -10,14 +11,19 @@ const ABAS = [
   { para: '/conta', rotulo: 'Conta', Icone: User },
 ] as const
 
+const ABA_ADMIN = { para: '/admin', rotulo: 'Admin', Icone: ShieldCheck } as const
+
 export function TabBar() {
+  const { usuario } = useAuth()
+  const abas = usuario?.perfil === 'ADMINISTRADOR' ? [...ABAS, ABA_ADMIN] : ABAS
+
   return (
     <nav
       aria-label="Navegação principal"
       className="safe-bottom fixed inset-x-0 bottom-0 z-[1100] border-t border-border bg-bg-elevated/85 backdrop-blur-xl"
     >
       <ul className="mx-auto flex h-tabbar w-full max-w-md items-stretch justify-between px-2 md:max-w-2xl">
-        {ABAS.map(({ para, rotulo, Icone, ...resto }) => (
+        {abas.map(({ para, rotulo, Icone, ...resto }) => (
           <li key={para} className="flex flex-1 items-center justify-center">
             <NavLink
               to={para}
