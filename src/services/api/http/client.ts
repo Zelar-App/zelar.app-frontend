@@ -13,6 +13,8 @@ export interface ClienteHttp {
   patch<T>(caminho: string, corpo?: unknown, init?: RequestInit): Promise<T>
   /** multipart/form-data (o navegador define o boundary). */
   postForm<T>(caminho: string, form: FormData, init?: RequestInit): Promise<T>
+  /** GET binário (fotos, anexos) com a mesma autenticação. */
+  getBlob(caminho: string, init?: RequestInit): Promise<Blob>
 }
 
 interface CorpoErroBackend {
@@ -37,7 +39,7 @@ async function lerCorpo<T>(res: Response): Promise<T> {
 export function criarClienteHttp({ baseUrl, obterToken }: OpcoesCliente): ClienteHttp {
   const base = baseUrl.replace(/\/+$/, '')
 
-  async function requisitar<T>(caminho: string, init: RequestInit, corpo?: unknown, form?: FormData): Promise<T> {
+  async function executar(caminho: string, init: RequestInit, corpo?: unknown, form?: FormData): Promise<Response> {
     const headers = new Headers(init.headers)
     headers.set('accept', 'application/json')
     const token = obterToken()
@@ -67,7 +69,11 @@ export function criarClienteHttp({ baseUrl, obterToken }: OpcoesCliente): Client
         `Erro ${res.status} ao chamar ${caminho}`
       throw new ApiError(res.status, mensagem, { erro: detalhe.erro, caminho: detalhe.caminho ?? caminho, timestamp: detalhe.timestamp })
     }
-    return lerCorpo<T>(res)
+    return res
+  }
+
+  async function requisitar<T>(caminho: string, init: RequestInit, corpo?: unknown, form?: FormData): Promise<T> {
+    return lerCorpo<T>(await executar(caminho, init, corpo, form))
   }
 
   return {
@@ -76,5 +82,6 @@ export function criarClienteHttp({ baseUrl, obterToken }: OpcoesCliente): Client
     put: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'PUT' }, corpo),
     patch: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'PATCH' }, corpo),
     postForm: (caminho, form, init = {}) => requisitar(caminho, { ...init, method: 'POST' }, undefined, form),
+    getBlob: async (caminho, init = {}) => (await executar(caminho, { ...init, method: 'GET' })).blob(),
   }
 }

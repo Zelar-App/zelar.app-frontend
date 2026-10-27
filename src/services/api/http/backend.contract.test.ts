@@ -100,11 +100,50 @@ describe('contratos HTTP do backend Java', () => {
     expect(window.localStorage.getItem('zelar.sessao')).toBeNull()
   })
 
-  it('não simula upload multipart enquanto o contrato de fotos do backend não estiver disponível', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(resposta(dto()))
+  it('cria a ocorrência em JSON e envia a foto por multipart no endpoint dedicado', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(resposta(dto(), 201))
+      .mockResolvedValueOnce(resposta({ id: 'f1', tipoConteudo: 'image/jpeg', tamanhoBytes: 4, largura: 1, altura: 1 }, 201))
+    const foto = new File(['foto'], 'foto.jpg', { type: 'image/jpeg' })
+    const criada = await repositorios().ocorrencias.criar({ categoria: 'BURACO', descricao: 'Buraco', localizacao: { latitude: 1, longitude: 2 }, foto })
+    expect(criada.id).toBe('o1')
+    const [url, init] = fetchMock.mock.calls[1]
+    expect([String(url), init?.method]).toEqual(['http://api.local/api/v1/ocorrencias/o1/fotografia', 'POST'])
+    const body = init?.body
+    expect(body).toBeInstanceOf(FormData)
+    expect((body as FormData).get('foto')).toBe(foto)
+  })
+
+  it('informa quando a ocorrência foi criada mas o envio da foto falhou', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(resposta(dto(), 201))
+      .mockResolvedValueOnce(resposta({ mensagem: 'Fotografia inválida' }, 422))
     await expect(repositorios().ocorrencias.criar({ categoria: 'BURACO', descricao: 'Buraco', localizacao: { latitude: 1, longitude: 2 }, foto: new File(['foto'], 'foto.jpg', { type: 'image/jpeg' }) }))
-      .rejects.toMatchObject({ status: 501, mensagem: expect.stringContaining('fotos') })
-    expect(fetchMock).not.toHaveBeenCalled()
+      .rejects.toMatchObject({ status: 422, mensagem: expect.stringMatching(/chamado foi criado.*foto não foi enviada/i) })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('resolve fotoUrl por blob autenticado quando possuiFotografia', async () => {
+    vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:foto'), revokeObjectURL: vi.fn() })
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(resposta(dto('o1', { possuiFotografia: true })))
+      .mockResolvedValueOnce(new Response(new Blob(['png'], { type: 'image/png' }), { status: 200 }))
+    const item = await repositorios().ocorrencias.buscarPorId('o1')
+    expect(fetchMock.mock.calls[1][0]).toBe('http://api.local/api/v1/ocorrencias/o1/fotografia')
+    expect(fetchMock.mock.calls[1][1]?.method).toBe('GET')
+    expect(item.fotoUrl).toBe('blob:foto')
+    vi.unstubAllGlobals()
+  })
+
+  it('entrega o detalhe sem foto quando o download da imagem falha', async () => {
+    vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:foto') })
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(resposta(dto('o1', { possuiFotografia: true })))
+      .mockResolvedValueOnce(resposta({ mensagem: 'Foto não encontrada' }, 404))
+    const item = await repositorios().ocorrencias.buscarPorId('o1')
+    expect(item.id).toBe('o1')
+    expect(item.fotoUrl).toBeUndefined()
+    vi.unstubAllGlobals()
   })
 
   it('rejeita envelope inválido com erro legível, sem retornar uma lista parcial', async () => {
