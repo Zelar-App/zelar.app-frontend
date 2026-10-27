@@ -10,6 +10,7 @@ export interface ClienteHttp {
   get<T>(caminho: string, init?: RequestInit): Promise<T>
   post<T>(caminho: string, corpo?: unknown, init?: RequestInit): Promise<T>
   put<T>(caminho: string, corpo?: unknown, init?: RequestInit): Promise<T>
+  patch<T>(caminho: string, corpo?: unknown, init?: RequestInit): Promise<T>
   /** multipart/form-data (o navegador define o boundary). */
   postForm<T>(caminho: string, form: FormData, init?: RequestInit): Promise<T>
 }
@@ -73,6 +74,7 @@ export function criarClienteHttp({ baseUrl, obterToken }: OpcoesCliente): Client
     get: (caminho, init = {}) => requisitar(caminho, { ...init, method: 'GET' }),
     post: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'POST' }, corpo),
     put: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'PUT' }, corpo),
+    patch: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'PATCH' }, corpo),
     postForm: (caminho, form, init = {}) => requisitar(caminho, { ...init, method: 'POST' }, undefined, form),
   }
 }

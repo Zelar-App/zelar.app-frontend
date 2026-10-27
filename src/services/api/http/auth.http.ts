@@ -4,6 +4,14 @@ import type { ClienteHttp } from './client'
 
 export const CHAVE_SESSAO_HTTP = 'zelar.sessao'
 
+/** Resposta real do backend em POST /api/v1/auth/login. */
+interface LoginResponseBackend {
+  accessToken: string
+  tokenType: string
+  expiresIn: number
+  usuario: Usuario
+}
+
 function lerSessao(): SessaoAuth | null {
   try {
     const bruto = window.localStorage.getItem(CHAVE_SESSAO_HTTP)
@@ -45,7 +53,8 @@ export function criarAuthHttp(http: ClienteHttp): AuthRepository {
     },
 
     async login(input: LoginInput): Promise<SessaoAuth> {
-      const sessao = await http.post<SessaoAuth>('/api/v1/auth/login', input)
+      const resposta = await http.post<LoginResponseBackend>('/api/v1/auth/login', input)
+      const sessao: SessaoAuth = { token: resposta.accessToken, usuario: resposta.usuario }
       window.localStorage.setItem(CHAVE_SESSAO_HTTP, JSON.stringify(sessao))
       return sessao
     },
