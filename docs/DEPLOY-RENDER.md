@@ -15,7 +15,7 @@ O banco existente usa Flyway V1–V5 e Hibernate `validate`. Não habilite `crea
 
 ## Fotografias
 
-O contrato atual cria o chamado em JSON e envia a foto em `POST /api/v1/ocorrencias/{id}/fotografia`, multipart com parte `foto`. O backend precisa de `FOTOGRAFIAS_HABILITADAS=true`, `SUPABASE_STORAGE_URL`, `SUPABASE_STORAGE_BUCKET` e uma chave de servidor válida em `SUPABASE_STORAGE_SECRET_KEY`. Use bucket privado, JPEG/PNG e limite de 5 MiB. Uma chave `anon` não serve para esse acesso.
+O contrato atual cria o chamado em JSON e envia a foto em `POST /api/v1/ocorrencias/{id}/fotografia`, multipart com parte `foto`. O backend precisa de `FOTOGRAFIAS_HABILITADAS=true`, `SUPABASE_STORAGE_URL`, `SUPABASE_STORAGE_BUCKET` e uma chave moderna `sb_secret_...` em `SUPABASE_STORAGE_SECRET_KEY`. Use bucket privado, JPEG/PNG e limite de 5 MiB. Uma chave `anon` não serve para esse acesso. A chave legada `service_role` ainda é aceita pelo Supabase, mas o adaptador Java atual valida especificamente o formato moderno.
 
 Se a segunda operação falhar, o chamado já existe: a interface navega para ele, informa a falha e permite anexar a foto ao mesmo ID. A consulta da imagem usa Bearer via backend e uma URL temporária revogada ao sair da tela. Nenhuma chave Supabase de servidor chega ao navegador.
 
