@@ -38,6 +38,9 @@ export interface Ocorrencia {
   descricao: string
   localizacao: Localizacao
   fotoUrl?: string | null
+  possuiFotografia?: boolean
+  /** Aviso transitório quando o chamado foi criado, mas o upload separado falhou. */
+  avisoFotografia?: string
   status: StatusOcorrencia
   prioridade?: Prioridade | null
   criadoEm: string

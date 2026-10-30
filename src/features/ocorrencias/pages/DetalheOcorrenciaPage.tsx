@@ -8,12 +8,16 @@ import { PinOcorrencia } from '../../mapa/components/PinOcorrencia'
 import { TimelineStatus } from '../components/TimelineStatus'
 import { useOcorrencia } from '../hooks/useOcorrencia'
 import { ICONE_CATEGORIA } from '../icones'
+import { FotografiaOcorrencia } from '../components/FotografiaOcorrencia'
+import { useAuth } from '../../auth/useAuth'
 
 export default function DetalheOcorrenciaPage() {
   const { id } = useParams()
   const location = useLocation()
-  const criado = Boolean((location.state as { criado?: boolean } | null)?.criado)
-  const { ocorrencia: o, erro, carregando } = useOcorrencia(id)
+  const estado = location.state as { criado?: boolean; avisoFotografia?: string } | null
+  const criado = Boolean(estado?.criado)
+  const { usuario } = useAuth()
+  const { ocorrencia: o, erro, carregando, recarregar } = useOcorrencia(id)
 
   if (carregando && !o) {
     return (
@@ -69,11 +73,8 @@ export default function DetalheOcorrenciaPage() {
           <p className="mt-3 text-sm leading-relaxed whitespace-pre-line">{o.descricao}</p>
         </GlassCard>
 
-        {o.fotoUrl && (
-          <GlassCard semPadding className="overflow-hidden">
-            <img src={o.fotoUrl} alt="Foto enviada com o chamado" className="max-h-72 w-full object-cover" />
-          </GlassCard>
-        )}
+        {estado?.avisoFotografia && !o.possuiFotografia && <div className="md:col-span-2"><ErrorBanner mensagem={estado.avisoFotografia} /></div>}
+        <FotografiaOcorrencia key={`${o.id}:${Boolean(o.possuiFotografia)}`} ocorrencia={o} podeEnviar={usuario?.id === o.usuarioId} aoAtualizar={recarregar} />
 
         <GlassCard semPadding className="overflow-hidden">
           <div className="h-40">

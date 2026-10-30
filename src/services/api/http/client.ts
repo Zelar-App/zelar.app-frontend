@@ -8,6 +8,7 @@ export interface OpcoesCliente {
 
 export interface ClienteHttp {
   get<T>(caminho: string, init?: RequestInit): Promise<T>
+  getBlob(caminho: string, init?: RequestInit): Promise<Blob>
   post<T>(caminho: string, corpo?: unknown, init?: RequestInit): Promise<T>
   put<T>(caminho: string, corpo?: unknown, init?: RequestInit): Promise<T>
   patch<T>(caminho: string, corpo?: unknown, init?: RequestInit): Promise<T>
@@ -37,9 +38,9 @@ async function lerCorpo<T>(res: Response): Promise<T> {
 export function criarClienteHttp({ baseUrl, obterToken }: OpcoesCliente): ClienteHttp {
   const base = baseUrl.replace(/\/+$/, '')
 
-  async function requisitar<T>(caminho: string, init: RequestInit, corpo?: unknown, form?: FormData): Promise<T> {
+  async function requisitar<T>(caminho: string, init: RequestInit, corpo?: unknown, form?: FormData, binario = false): Promise<T> {
     const headers = new Headers(init.headers)
-    headers.set('accept', 'application/json')
+    headers.set('accept', binario ? 'image/jpeg, image/png' : 'application/json')
     const token = obterToken()
     if (token) headers.set('authorization', `Bearer ${token}`)
     let body: BodyInit | undefined
@@ -67,11 +68,12 @@ export function criarClienteHttp({ baseUrl, obterToken }: OpcoesCliente): Client
         `Erro ${res.status} ao chamar ${caminho}`
       throw new ApiError(res.status, mensagem, { erro: detalhe.erro, caminho: detalhe.caminho ?? caminho, timestamp: detalhe.timestamp })
     }
-    return lerCorpo<T>(res)
+    return binario ? await res.blob() as T : lerCorpo<T>(res)
   }
 
   return {
     get: (caminho, init = {}) => requisitar(caminho, { ...init, method: 'GET' }),
+    getBlob: (caminho, init = {}) => requisitar(caminho, { ...init, method: 'GET' }, undefined, undefined, true),
     post: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'POST' }, corpo),
     put: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'PUT' }, corpo),
     patch: (caminho, corpo, init = {}) => requisitar(caminho, { ...init, method: 'PATCH' }, corpo),

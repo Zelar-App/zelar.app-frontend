@@ -40,7 +40,7 @@ export default function FormularioChamadoPage() {
     setEnviando(true)
     try {
       const criada = await api.ocorrencias.criar({ categoria, descricao: descricao.trim(), localizacao, foto })
-      navigate(`/historico/${criada.id}`, { replace: true, state: { criado: true } })
+      navigate(`/historico/${criada.id}`, { replace: true, state: { criado: true, avisoFotografia: criada.avisoFotografia } })
     } catch (err) {
       setErroApi(mensagemDeErro(err))
     } finally {
