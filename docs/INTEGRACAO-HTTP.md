@@ -1,7 +1,7 @@
 # Integração HTTP
 
 O adaptador foi alinhado aos DTOs Java de `zelar.app-backend:develop`
-(`5e5abf4d8add13f06a1ca034aa567d6b68e89ef8`). Os testes de contrato usam esses
+(`e0d47f21e0439437c031d7610de12dd4dbbb1cd2` para fotografias). Os testes de contrato usam esses
 formatos; não substituem o ensaio com backend e banco em execução.
 
 ## Ambiente local
@@ -38,9 +38,13 @@ na mesma origem ou CORS explícito no backend para a origem publicada.
 - Indicadores: o mapeamento é o do PR backend #83 (BE-15), já integrado no backend.
   Um 404 permite calcular os indicadores a partir de todas as páginas;
   outros erros são apresentados, sem mascarar autorização ou indisponibilidade.
-- Fotos: a develop conferida aceita JSON e não implementa multipart (BE-13).
-  O mock continua demonstrando fotos; o modo HTTP informa essa limitação antes de
-  enviar. Um sucesso no mock não comprova upload ou armazenamento real.
+- Fotos: cria a ocorrência em JSON e envia a foto separadamente em
+  `POST /api/v1/ocorrencias/{id}/fotografia`, multipart com parte `foto`.
+  Uma falha no segundo passo mantém o chamado criado, informa o resultado parcial
+  e permite anexar novamente ao mesmo ID. `possuiFotografia` indica a disponibilidade;
+  a leitura dos bytes usa Bearer, com URL temporária revogada ao sair da tela.
+  O backend exige bucket privado e chave moderna `sb_secret_...` exclusivamente no
+  servidor. Um sucesso no mock não comprova upload ou armazenamento real.
 
 ## Validação pendente de ambiente
 

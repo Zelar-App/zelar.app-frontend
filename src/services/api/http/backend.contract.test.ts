@@ -100,11 +100,38 @@ describe('contratos HTTP do backend Java', () => {
     expect(window.localStorage.getItem('zelar.sessao')).toBeNull()
   })
 
-  it('não simula upload multipart enquanto o contrato de fotos do backend não estiver disponível', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(resposta(dto()))
-    await expect(repositorios().ocorrencias.criar({ categoria: 'BURACO', descricao: 'Buraco', localizacao: { latitude: 1, longitude: 2 }, foto: new File(['foto'], 'foto.jpg', { type: 'image/jpeg' }) }))
-      .rejects.toMatchObject({ status: 501, mensagem: expect.stringContaining('fotos') })
-    expect(fetchMock).not.toHaveBeenCalled()
+  it('cria o chamado e envia a fotografia autenticada no endpoint multipart separado', async () => {
+    window.localStorage.setItem('zelar.sessao', JSON.stringify({ token: 'jwt', usuario }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(resposta(dto())).mockResolvedValueOnce(resposta({ id: 'anexo' }, 201))
+    const foto = new File(['foto'], 'foto.jpg', { type: 'image/jpeg' })
+    const criada = await repositorios().ocorrencias.criar({ categoria: 'BURACO', descricao: 'Buraco', localizacao: { latitude: 1, longitude: 2 }, foto })
+    expect(criada).toMatchObject({ id: 'o1', possuiFotografia: true })
+    const [url, init] = fetchMock.mock.calls[1]
+    expect(url).toBe('http://api.local/api/v1/ocorrencias/o1/fotografia')
+    expect(init?.body).toBeInstanceOf(FormData)
+    const form = init!.body as FormData
+    expect(form.get('foto')).toBe(foto)
+    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer jwt')
+    expect(new Headers(init?.headers).has('content-type')).toBe(false)
+  })
+
+  it('preserva o chamado criado e informa a falha da foto sem convidar à duplicação', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(resposta(dto())).mockResolvedValueOnce(resposta({ mensagem: 'Storage indisponível' }, 503))
+    const criada = await repositorios().ocorrencias.criar({ categoria: 'BURACO', descricao: 'Buraco', localizacao: { latitude: 1, longitude: 2 }, foto: new File(['foto'], 'foto.jpg', { type: 'image/jpeg' }) })
+    expect(criada).toMatchObject({ id: 'o1', avisoFotografia: expect.stringMatching(/chamado.*criado.*foto/i) })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('baixa os bytes da fotografia com Bearer e permite repetir só o upload', async () => {
+    window.localStorage.setItem('zelar.sessao', JSON.stringify({ token: 'jwt', usuario }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('jpeg-bytes', { headers: { 'content-type': 'image/jpeg' } })).mockResolvedValueOnce(resposta({ id: 'foto' }, 201))
+    const repo = repositorios().ocorrencias
+    const imagem = await repo.buscarFotografia!('o1')
+    expect(await imagem.text()).toBe('jpeg-bytes')
+    expect(imagem.type).toBe('image/jpeg')
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('authorization')).toBe('Bearer jwt')
+    await repo.enviarFotografia!('o1', new File(['x'], 'a.jpg', { type: 'image/jpeg' }))
+    expect(fetchMock.mock.calls.map(([, init]) => init?.method)).toEqual(['GET', 'POST'])
   })
 
   it('rejeita envelope inválido com erro legível, sem retornar uma lista parcial', async () => {

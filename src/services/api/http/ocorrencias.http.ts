@@ -41,16 +41,19 @@ function normalizar(dto: OcorrenciaResponse): Ocorrencia {
   return {
     id: dto.id, usuarioId: dto.usuarioId, categoria: dto.categoria, descricao: dto.descricao,
     localizacao: { latitude: dto.latitude, longitude: dto.longitude, enderecoAproximado: dto.enderecoAproximado },
-    fotoUrl: dto.fotoUrl, status: dto.status, prioridade: dto.prioridade,
+    fotoUrl: dto.fotoUrl, possuiFotografia: dto.possuiFotografia ?? false, status: dto.status, prioridade: dto.prioridade,
     criadoEm: dto.dataCriacao, atualizadoEm, historico,
   }
 }
 
 export function criarOcorrenciasHttp(http: ClienteHttp): OcorrenciaRepository {
+  async function enviarFotografia(id: string, foto: File): Promise<void> {
+    const form = new FormData()
+    form.append('foto', foto)
+    await http.postForm(`${CAMINHO}/${encodeURIComponent(id)}/fotografia`, form)
+  }
   return {
     async criar(input: NovaOcorrenciaInput): Promise<Ocorrencia> {
-      // A develop aceita JSON; multipart depende do contrato ainda pendente da BE-13.
-      if (input.foto) throw new ApiError(501, 'O servidor ainda não aceita fotos. Remova a foto para enviar o chamado.')
       const dados = {
         categoria: input.categoria,
         descricao: input.descricao,
@@ -58,8 +61,20 @@ export function criarOcorrenciasHttp(http: ClienteHttp): OcorrenciaRepository {
         longitude: input.localizacao.longitude,
         enderecoAproximado: input.localizacao.enderecoAproximado ?? undefined,
       }
-      return normalizar(await http.post<OcorrenciaResponse>(CAMINHO, dados))
+      const criada = normalizar(await http.post<OcorrenciaResponse>(CAMINHO, dados))
+      if (input.foto) {
+        try {
+          await enviarFotografia(criada.id, input.foto)
+          criada.possuiFotografia = true
+        } catch (erro) {
+          criada.avisoFotografia = `O chamado foi criado, mas a foto não foi enviada. Você pode tentar anexá-la novamente neste chamado. ${mensagemDeErro(erro)}`
+        }
+      }
+      return criada
     },
+
+    enviarFotografia,
+    buscarFotografia: (id, sinal) => http.getBlob(`${CAMINHO}/${encodeURIComponent(id)}/fotografia`, { signal: sinal }),
 
     async listar(filtro: FiltroOcorrencias = {}): Promise<Ocorrencia[]> {
       const q = new URLSearchParams({ pagina: '0', tamanho: '100' })

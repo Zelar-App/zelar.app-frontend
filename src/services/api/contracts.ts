@@ -32,6 +32,10 @@ export interface OcorrenciaRepository {
   atualizar(id: string, input: AtualizarOcorrenciaInput): Promise<Ocorrencia>
   /** GET /api/v1/ocorrencias/indicadores */
   indicadores(): Promise<Indicadores>
+  /** Fotografia privada: o HTTP envia Bearer e devolve bytes, nunca uma URL pública. */
+  buscarFotografia?(id: string, sinal?: AbortSignal): Promise<Blob>
+  /** Repete somente o envio da fotografia, sem criar outro chamado. */
+  enviarFotografia?(id: string, foto: File): Promise<void>
 }
 
 export interface GeocodingService {
