@@ -41,6 +41,26 @@ describe('FormularioChamadoPage', () => {
   })
   afterEach(() => vi.unstubAllGlobals())
 
+  it('permite voltar para alterar o local escolhido', async () => {
+    const { router } = await montar()
+    await userEvent.click(await screen.findByRole('button', { name: 'Alterar local' }))
+    expect(router.state.location.pathname).toBe('/abrir-chamado')
+  })
+
+  it('rejeita descrição acima do limite e apresenta falha da API sem perder o formulário', async () => {
+    const { criar } = await montar({ localizacao: { ...localizacao, enderecoAproximado: null } })
+    await userEvent.click(await screen.findByRole('button', { name: 'Buraco na via' }))
+    fireEvent.change(screen.getByLabelText('Descrição'), { target: { value: 'x'.repeat(1001) } })
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar chamado' }))
+    expect(screen.getByText('A descrição deve ter no máximo 1000 caracteres')).toBeInTheDocument()
+    expect(criar).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Descrição'), { target: { value: 'Buraco na rua' } })
+    criar.mockRejectedValueOnce(new Error('Não foi possível enviar'))
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar chamado' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível enviar')
+    expect(screen.getByLabelText('Descrição')).toHaveValue('Buraco na rua')
+  })
+
   it('bloqueia clique e submit até a foto ficar pronta e envia o arquivo comprimido', async () => {
     let concluir!: (arquivo: File) => void
     comprimir.mockImplementationOnce(() => new Promise<File>((resolve) => { concluir = resolve }))
