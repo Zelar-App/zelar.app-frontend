@@ -21,6 +21,19 @@ async function montar(indice: 0 | 1) {
 describe('ContaPage', () => {
   beforeEach(() => window.localStorage.clear())
 
+  it('cancelar ou fechar reset preserva dados e sessão', async () => {
+    await montar(0)
+    const abrir = await screen.findByRole('button', { name: 'Resetar dados demo' })
+    const antes = localStorage.getItem('zelar.sessao')
+    await userEvent.click(abrir)
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await userEvent.click(abrir)
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(localStorage.getItem('zelar.sessao')).toBe(antes)
+  })
+
   it('mostra os dados da cidadã, sem link de admin', async () => {
     await montar(0)
     expect(await screen.findByText('Joana Silva')).toBeInTheDocument()
