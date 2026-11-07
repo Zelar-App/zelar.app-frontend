@@ -33,7 +33,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Lint
         run: npm run lint
-      - name: Testes sem watch
-        run: npm test
+      - name: Testes e cobertura mínima por arquivo
+        run: npm run test:coverage
       - name: Build de produção
         run: npm run build
