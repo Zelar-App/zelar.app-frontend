@@ -27,6 +27,17 @@ async function montar() {
 describe('HomePage', () => {
   beforeEach(() => window.localStorage.clear())
 
+  it('mantém a tela disponível com aviso quando listagem falha sem sessão', async () => {
+    const api = apiDeTeste()
+    vi.spyOn(api.ocorrencias, 'listar').mockRejectedValue(new Error('Sem conexão'))
+    renderComProviders(<HomePage />, { api })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sem conexão')
+    await userEvent.click(screen.getByRole('button', { name: 'Caixa de entrada' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('dá boas-vindas pelo primeiro nome e mostra abertos, resolvidos e espera estimada', async () => {
     await montar()
     expect(await screen.findByText('Joana')).toBeInTheDocument()

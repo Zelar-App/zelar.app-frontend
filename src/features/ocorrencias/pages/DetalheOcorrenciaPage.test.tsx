@@ -25,6 +25,15 @@ async function montar(id: string, state?: unknown) {
 describe('DetalheOcorrenciaPage', () => {
   beforeEach(() => window.localStorage.clear())
 
+  it('usa coordenadas quando endereço não foi resolvido', async () => {
+    const api = apiDeTeste()
+    await api.auth.login({ email: USUARIOS_SEED[0].email, senha: USUARIOS_SEED[0].senha })
+    const [o] = await api.ocorrencias.listar()
+    vi.spyOn(api.ocorrencias, 'buscarPorId').mockResolvedValue({ ...o, localizacao: { latitude: 1, longitude: 2, enderecoAproximado: null } })
+    renderComProviders(<div />, { api, rota: `/historico/${o.id}`, rotas })
+    expect(await screen.findByText('1.00000, 2.00000')).toBeInTheDocument()
+  })
+
   it('mostra categoria, status, descrição, endereço, foto, mapa e linha do tempo', async () => {
     const api = apiDeTeste()
     await api.auth.login({ email: USUARIOS_SEED[0].email, senha: USUARIOS_SEED[0].senha })

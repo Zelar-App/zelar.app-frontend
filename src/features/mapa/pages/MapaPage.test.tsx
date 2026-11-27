@@ -16,7 +16,7 @@ vi.mock('../components/PinOcorrencia', () => ({
     </button>
   ),
 }))
-vi.mock('../components/BotaoLocalizar', () => ({ BotaoLocalizar: () => <button type="button">Usar minha localização</button> }))
+vi.mock('../components/BotaoLocalizar', () => ({ BotaoLocalizar: ({ aoErro, aoLocalizar }: { aoErro: (erro: string) => void; aoLocalizar: () => void }) => <><button onClick={() => aoErro('GPS indisponível')}>Falhar GPS</button><button onClick={() => aoLocalizar()}>Usar minha localização</button></> }))
 
 const rotas = [
   { path: '/mapa', element: <MapaPage /> },
@@ -32,6 +32,25 @@ async function montar() {
 
 describe('MapaPage', () => {
   beforeEach(() => window.localStorage.clear())
+
+  it('apresenta falhas da API e limpa aviso de GPS após nova localização', async () => {
+    const api = apiDeTeste()
+    vi.spyOn(api.ocorrencias, 'listar').mockRejectedValue(new Error('Sem conexão'))
+    renderComProviders(<MapaPage />, { api })
+    expect(await screen.findByText('Sem conexão')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Falhar GPS' }))
+    expect(screen.getByText('GPS indisponível')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Usar minha localização' }))
+    expect(screen.queryByText('GPS indisponível')).toBeNull()
+  })
+
+  it('fecha resumo ao dispensar o painel do chamado', async () => {
+    await montar()
+    await userEvent.click((await screen.findAllByTestId('pin'))[0])
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
 
   it('mostra um pin por chamado e filtra por status', async () => {
     await montar()

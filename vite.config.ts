@@ -27,6 +27,23 @@ export default defineConfig(async ({ mode }) => {
       globals: true,
       setupFiles: ['src/test/setup.ts'],
       css: false,
+      coverage: {
+        provider: 'v8' as const,
+        include: ['src/**/*.{ts,tsx}'],
+        exclude: [
+          'src/**/*.test.{ts,tsx}', 'src/test/**', 'src/**/*.d.ts',
+          // Entrada sem regra própria e módulos apenas de tipos/reexports.
+          'src/main.tsx', 'src/domain/types.ts', 'src/services/api/contracts.ts', 'src/shared/ui/index.ts',
+        ],
+        reporter: ['text', 'html', 'json', 'json-summary'] as ('text' | 'html' | 'json' | 'json-summary')[],
+        thresholds: {
+          perFile: true,
+          lines: 90,
+          branches: 90,
+          functions: 90,
+          statements: 90,
+        },
+      },
     },
   }
 })

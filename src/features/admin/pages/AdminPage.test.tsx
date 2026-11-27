@@ -24,6 +24,31 @@ const indicador = (nome: string) => within(screen.getByRole('region', { name: no
 describe('AdminPage', () => {
   beforeEach(() => window.localStorage.clear())
 
+  it.each(['lista', 'indicadores'])('recupera falha de %s ao tentar novamente', async (alvo) => {
+    const api = apiDeTeste()
+    await api.auth.login({ email: USUARIOS_SEED[1].email, senha: USUARIOS_SEED[1].senha })
+    const listar = vi.spyOn(api.ocorrencias, 'listar')
+    const indicadores = vi.spyOn(api.ocorrencias, 'indicadores')
+    if (alvo === 'lista') listar.mockRejectedValueOnce(new Error('Falha na listagem'))
+    else indicadores.mockRejectedValueOnce(new Error('Falha nos indicadores'))
+    renderComProviders(<AdminPage />, { api })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Falha')
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+    expect(listar.mock.calls.length).toBeGreaterThan(1)
+    expect(indicadores.mock.calls.length).toBeGreaterThan(1)
+  })
+
+  it('mostra estado vazio para filtro sem resultados e permite fechar gerenciamento', async () => {
+    await montar()
+    await userEvent.click(within((await screen.findAllByRole('listitem'))[0]).getByRole('button', { name: 'Gerenciar' }))
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Resolvidas' }))
+    await userEvent.selectOptions(screen.getByLabelText('Prioridade'), 'MEDIA')
+    expect(screen.getByText('Nenhuma ocorrência com esses filtros')).toBeInTheDocument()
+  })
+
   it('mostra indicadores vindos do contrato e lista todas as ocorrências', async () => {
     const { indicadores } = await montar()
     await waitFor(() => expect(indicador('Total')).toHaveTextContent('8'))

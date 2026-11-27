@@ -19,6 +19,18 @@ const nova = () => ({
 describe('ocorrencias mock', () => {
   beforeEach(() => window.localStorage.clear())
 
+  it('combina filtros por usuário e categoria e recusa atualização de id inexistente', async () => {
+    await logar(admin)
+    const repo = criarOcorrenciasMock()
+    const lista = await repo.listar({ usuarioId: joana.id, categoria: 'BURACO' })
+    expect(lista).toHaveLength(1)
+    expect(lista[0]).toMatchObject({ usuarioId: joana.id, categoria: 'BURACO' })
+    await expect(repo.atualizar('inexistente', { prioridade: 'ALTA' })).rejects.toMatchObject({ status: 404 })
+    const atual = await repo.atualizar(lista[0].id, {})
+    expect(atual.status).toBe(lista[0].status)
+    expect(atual.historico).toEqual(lista[0].historico)
+  })
+
   it('cidadão cria ocorrência que nasce ENVIADA com histórico inicial e persiste', async () => {
     await logar(joana)
     const repo = criarOcorrenciasMock()
